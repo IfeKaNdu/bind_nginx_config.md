@@ -1,13 +1,13 @@
 # Installation et Configuration des packages bind et nginx sur CentOS 7 pour réseau local
 
 Domain Name System est responsable de la traduction du domaine Internet et des noms d’hôte en adresses IP, et inversement. Les clients DNS enverront les demandes (nom d’hôte / adresses IP) au serveur DNS et attendront une réponse.
-
+-------------------------------------------------------------- 
 ### Installation du package du serveur DNS BIND
 Installez DNS avec toutes ses dépendances.
 
 ```bash
 # yum install -y bind*
-```
+-------------------------------------------------------------- ```
 ### Attribuer une adresse IP statique au serveur DNS
 
 ###### REMARQUE: L'adresse IP doit être statique et non dynamique pour que l'adresse IP reste inchangée à chaque démarrage ou redémarrage de votre ordinateur.
@@ -47,7 +47,7 @@ PEERROUTES=yes
 
 ```
 Trouvez des descriptions des variables de réseau ci-dessus dans votre `/usr/share/doc/initscripts*/sysconfig.txt` fichier.
-
+-------------------------------------------------------------- 
 ### Attribuer un FQDN (Fully Qualified Domain Name) au serveur
 
 Modifier le`/etc/sysconfig/network` fichier pour ajouter le NOM D'HÔTE de votre choix. Le mien est `host.odii.cic`
@@ -56,7 +56,7 @@ Modifier le`/etc/sysconfig/network` fichier pour ajouter le NOM D'HÔTE de votre
 # vim /etc/sysconfig/network 
 NETWORKING=yes
 HOSTNAME=host.odii.cic
-```
+-------------------------------------------------------------- ```
 ###  Configurez le `/etc/hosts` fichier en ajoutant une entrée d'hôte
 ```bash
 # vim /etc/hosts
@@ -68,7 +68,7 @@ Remarquez ci-dessus que `192.168.8.2` et` host.odii.cic` ont été ajoutés et q
 `127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6 `
 Ce qui précède a été généré par défaut lors de l’installation du système d’exploitation.
-
+-------------------------------------------------------------- 
 ### Configurer `/etc/resolv.conf`
 ```bash
 # vim /etc/resolv.conf
@@ -77,6 +77,7 @@ nameserver 192.168.8.2
 ```
 
 Remarque: l'étape ci-dessus sera configurée non seulement sur l'hôte du serveur DNS, mais également sur tous les clients DNS du réseau local qui utiliseront le serveur DNS pour la résolution de noms ou d'IP.
+-------------------------------------------------------------- 
 ### Configurez le fichier `/etc/named.conf` 
 ```bash
 # vim /etc/named.conf
@@ -94,6 +95,7 @@ options {
 ...
 ```
 Modifiez les informations ci-dessus en fonction de votre adresse IP, commentez la ligne IPv6 et modifiez l'autorisation de requête de **none** en **any** .
+-------------------------------------------------------------- 
 ### Configurez le fichier `/etc/named.rfc1912.zones` de manière à pointer vers les zones
 ```bash
 # vim /etc/named.rfc1912.zones
@@ -129,7 +131,7 @@ zone "0.in-addr.arpa" IN {
 ```
 Le fichier ci-dessus vous permet de définir vos zones, c’est-à-dire vos zones de recherche directe et inverse.
 La zone aval est `odii.cic` et la zone inversée est 8.168.192, qui est l'inverse de l'ID réseau de l'adresse IP attribuée,` 192.168.8 `.
-
+-------------------------------------------------------------- 
 ### Créer et configurer le fichier pour les zones forward et reverse
 
 Il y a tout d'abord un fichier de modèle appelé `named.localhost` fourni avec le paquet bind lors de l'installation, utilisez-le comme modèle pour configurer les fichiers forward.zone et reverse.zone.
@@ -190,12 +192,12 @@ client4	IN	 A	192.168.8.4
 2	IN	 PTR	host.odii.cic.
 3	IN	 PTR	client3.odii.cic.
 4	IN	 PTR	client4.odii.cic.
-
+-------------------------------------------------------------- 
 ### Changer la propriété de groupe des fichiers `forward.zone` et` reverse.zone` de la root à named
 ```bash
 # chgrp named /var/named/forward.zone
 # chgrp named /var/named/reverse.zone  
-```
+-------------------------------------------------------------- ```
 ### Redémarrez le DNS named.service
 ```bash
 # systemctl restart named.service
@@ -279,13 +281,14 @@ Les commandes `host` et` dig` ne sont utilisées que pour interroger les serveur
 Ce qui précède montre que le DNS est correctement interrogé et qu'il est capable de résoudre les noms en IP.
 
 
-
+-------------------------------------------------------------- 
 # L'installation et la configuration de Nginx
 
 ** Remarque **: Les étapes importantes suivantes doivent être effectuées si Nginx doit être installé sur un CentOS doté du serveur Web par défaut Apache pour la plupart des distributions en cours d'exécution sans avoir à désinstaller Apache avant l'installation de Nginx.
 + Modifiez le port 80 par défaut d'Apache en un port personnalisé.
 + Désactivez Apache à partir du démarrage du système.
 + Masque Apache de jamais courir.
+-------------------------------------------------------------- 
 #### Changer le port 80 par défaut d'Apache en un port personnalisé
 Configurez le service Apache httpd pour qu’il écoute sur un port différent du port 80, par exemple le port 8090 afin de réserver le port 80 pour le service Nginx. Ouvrez le fichier de configuration `/etc/httpd/conf/httpd.conf`, puis changez le port 80 en port 8090:
 ```bash
@@ -319,7 +322,7 @@ Ouvrez un navigateur et accédez à l'adresse IP du serveur ou au nom de domaine
 ```bash
 http://192.168.8.2:8090
 http://host.odii.cic:8090
-```
+-------------------------------------------------------------- ```
 ### Désactiver Apache à partir du démarrage avec le démon d'initialisation systemd
 Pour désactiver Apache à partir du démarrage, exécutez la commande:
 ```bash 
@@ -343,7 +346,7 @@ Comme le montre la sortie, le fichier httpd.service dans / etc est lié à /dev/
 Ainsi, avec les étapes ci-dessus, le serveur Web Nginx peut être installé simultanément avec Apache sur le même serveur CentOS sans avoir à désinstaller Apache pour Nginx.
 
 ** Remarque ** Les deux serveurs Web peuvent être configurés pour s'exécuter en même temps, l'un servant de proxy pour l'autre.
-
+-------------------------------------------------------------- 
 ### Installer le serveur Web Nginx
 Commencez par mettre à jour les packages logiciels système avec la dernière version:
 ```bash
@@ -374,7 +377,7 @@ http://192.168.8.2
 Une page Nginx par défaut sera affichée.
 
 
-
+-------------------------------------------------------------- 
 #####                               References 
 							
 + Negus, N.  2015: Linux Bible(9th edition). Indianapolis, Indiana: John Wiley & Sons Inc., pp. 187,355-358, 362-375,449-476,576-577,708-713.
