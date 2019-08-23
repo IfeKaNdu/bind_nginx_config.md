@@ -412,8 +412,8 @@ server {
            index index.html index.htm;
         }
          error_page 404 /404.html;
- 51             location = /40x.html {
- 52         }
+              location = /40x.html {
+          }
      }
 ``` 
 This configuration serves static files over HTTP on port 80 from the directory `/var/www/odii.cic/chrome_extension_welcome`.This it does by telling nginx things such as:
@@ -434,8 +434,8 @@ nginx: configuration file /etc/nginx/nginx.conf test is successful
 ```
 If it gives you an error, there’s likely a syntax error. Check through the error and access log files 
 ```bash
-# vim /var/log/nginx/access.log;
-# vim /var/log/nginx/error.log;
+# vim /var/log/nginx/access.log
+# vim /var/log/nginx/error.log
 ```
 Test if the entire Domain names are all working and if nginx is propering serving the website at the root `/var/www/odii.cic/chrome_extension_welcome` by typing the domain names at the browser.
 ```
@@ -493,8 +493,8 @@ server {
            index index.html index.htm;
         }
          error_page 404 /404.html;
- 51             location = /40x.html {
- 52         }
+              location = /40x.html {
+         }
 	 # Media: images, icons, video, audio, HTC
 	    location ~* \.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|mp4|ogg|ogv|webm|htc)$ {
 	      access_log off;

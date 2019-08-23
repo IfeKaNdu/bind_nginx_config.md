@@ -378,6 +378,127 @@ Une page Nginx par défaut sera affichée.
 
 ### Configurer nginx pour héberger un site web
 En plus d'héberger un site statique avec nginx, il peut toujours être utilisé pour configurer des proxys inversés et un équilibrage de charge. Toujours en utilisant le nom de domaine host.odii.cic et l'adresse IP 192.168.8.2, nous les dirigerons vers le nouveau serveur nginx.
+Tous les fichiers de configuration nginx sont situés dans le répertoire `/etc/ nginx/`. Le fichier de configuration principal est `/etc/nginx/ nginx.conf`.
+Les options de configuration dans nginx sont appelées directives. Les directives sont organisées en groupes appelés blocs ou contextes. Les deux termes sont synonymes.
+Les lignes contenant des directives doivent se terminer par un; ou nginx ne parviendra pas à charger la configuration et à signaler une erreur.
+Nginx s'attend à ce que les fichiers statiques se trouvent dans un répertoire spécifique, qui peut également varier en fonction du choix effectué dans la configuration.
+Créez un répertoire `/var/www/odii.cic/` où les fichiers peuvent aller. Ensuite, copiez les fichiers statiques du site Web dans le dossier.
+```bash
+# mkdir /var/www/odii.cic/
+# cp -r /home/egbuniwe/Documents/_repo/chrome_extension_welcome /var/www/odii.cic/
+```
+Passons maintenant à la configuration de nginx proprement dite, nous devons informer le site de nginx et savoir comment le servir. Le fichier `* .conf` est créé dans le répertoire` /etc/nginx/conf.d/ `. dans la configuration en fonction de votre réglage.
+**NB**: Le fichier doit se terminer par `* .conf`
+```bash
+# vim /etc/nginx/conf.d/default.conf
+```
+Dans le fichier, configurez le bloc serveur suivant:
+```
+server {
+        listen       80;
+        listen       [::]:80;
+        server_name  www.odii.cic host.odii.cic odii.cic;
+	location / {
+             root /var/www/odii.cic/chrome_extension_welcome;
+           index index.html index.htm;
+        }
+         error_page 404 /404.html;
+             location = /40x.html {
+         }
+     }
+```
+Cette configuration sert des fichiers statiques via HTTP sur le port 80 à partir du répertoire `/var/www/odii.cic/chrome_extension_welcome`. Pour cela, il indique à nginx des choses telles que:
++ Livrer des fichiers du dossier `/var/www/odii.cic/chrome_extension_welcome`
++ La page d'index principale est `index.html`.
++ La directive server_name définit le nom d'hôte ou les noms des requêtes qui doivent être adressées à ce serveur. Il permet à plusieurs domaines d'être desservis à partir d'une seule adresse IP.192.168.8.2 servira les demandes pour www.odii.cic, host.odii.cic et odii.cic à partir du même emplacement `/var/www/odii.cic/ chrome_extension_welcome`.
++ Le paramètre `location` vous permet de configurer la manière dont nginx répondra aux demandes de ressources sur le serveur. Tout comme la directive `nom_serveur` indique à nginx comment traiter les demandes du domaine, les directives d'emplacement couvrent les demandes de fichiers et de dossiers spécifiques en fonction du chemin indiqué dans l'URL.
+Le chemin ou une partie de l'URL après le domaine est appelé l'URI.
++ Si plusieurs fichiers sont spécifiés pour la directive index, nginx traitera la liste dans l'ordre et traitera la demande avec le premier fichier existant. Si index.html n’existe pas dans le répertoire approprié, alors index.htm sera utilisé. Si aucun n'existe, un message 404 sera envoyé.
+
+vérifiez si la configuration a réussi en rechargeant la configuration sans arrêter le serveur, offrant ainsi la possibilité de modifier les configurations à la volée sans perdre de paquets. Redémarrez le serveur nginx pour appliquer les modifications.
+
+```bash
+# nginx -t
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+# systemctl restart nginx
+```
+Si cela vous donne une erreur, il y a probablement une erreur de syntaxe. Vérifier les fichiers de journaux d'erreur et d'accès
+```bash
+# vim /var/log/nginx/access.log
+# vim /var/log/nginx/error.log
+```
+Testez si tous les noms de domaine fonctionnent et si nginx propose de servir le site Web à la racine `/var/www/odii.cic/chrome_extension_welcome` en tapant les noms de domaine dans le navigateur.
+```
++ http://odii.cic
++ http://host.odii.cic
++ http://www.odii.cic
+```
+Le site dans le fichier de configuration personnalisé nginx a été bien rendu par le navigateur.
+
+### Désactivation de la journalisation.
+L'écriture de journaux Web nécessite des ressources. Si votre serveur est maintenant opérationnel, vous pouvez vouloir économiser des ressources pour votre serveur en désactivant la journalisation. Pour ce faire, ouvrez le fichier de configuration principal de nginx:
+
+```bash
+# vim /etc/nginx/nginx.conf
+---
+##
+# Logging Settings
+##
+access_log /var/log/nginx/access.log;
+error_log /var/log/nginx/error.log;
+---
+```
+Mettez en commentaire le access_log et le error_log.
+```
+##
+# Logging Settings
+##
+#access_log /var/log/nginx/access.log;
+#error_log /var/log/nginx/error.log;
+```
+Avec ce qui précède, la journalisation sera désactivée pour votre serveur Web nginx.
+### Mise en cache côté client
+Dire à vos clients de mettre en cache des ressources telles que les fichiers js, css et images peut améliorer considérablement les performances.
+Ajoutez les règles de mise en cache suivantes à la fin du bloc de votre serveur:
+```
+---
+ # Media: images, icons, video, audio, HTC
+	    location ~* \.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|mp4|ogg|ogv|webm|htc)$ {
+	      access_log off;
+	      add_header Cache-Control "max-age=2592000";
+	    }	    # CSS and Javascript
+	    location ~* \.(?:css|js)$ {
+	      add_header Cache-Control "max-age=31536000";
+	      access_log off;
+	    }
+```
+Le bloc serveur devrait maintenant ressembler à ceci:
+
+```
+server {
+        listen       80;
+        listen       [::]:80;
+        server_name  www.odii.cic host.odii.cic odii.cic;
+	location / {
+             root /var/www/odii.cic/chrome_extension_welcome;
+           index index.html index.htm;
+        }
+         error_page 404 /404.html;
+              location = /40x.html {
+          }
+	 # Media: images, icons, video, audio, HTC
+	    location ~* \.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|mp4|ogg|ogv|webm|htc)$ {
+	      access_log off;
+	      add_header Cache-Control "max-age=2592000";
+	    }	    # CSS and Javascript
+	    location ~* \.(?:css|js)$ {
+	      add_header Cache-Control "max-age=31536000";
+	      access_log off;
+	    }
+
+    }
 -------------------------------------------------------------- 
 References
 		
