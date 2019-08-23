@@ -376,13 +376,17 @@ http://192.168.8.2
 ```
 Une page Nginx par défaut sera affichée.
 
-
+### Configurer nginx pour héberger un site web
+En plus d'héberger un site statique avec nginx, il peut toujours être utilisé pour configurer des proxys inversés et un équilibrage de charge. Toujours en utilisant le nom de domaine host.odii.cic et l'adresse IP 192.168.8.2, nous les dirigerons vers le nouveau serveur nginx.
 -------------------------------------------------------------- 
-#####                               References 
-							
+References
+		
 + Negus, N.  2015: Linux Bible(9th edition). Indianapolis, Indiana: John Wiley & Sons Inc., pp. 187,355-358, 362-375,449-476,576-577,708-713.
 
++ Derek, D.  2019: Nginx Cookbook(2019 update). 1005 Gravenstein Highway North, Sebastopol,CA : O’Reilly Media, Inc., pp. 1-8.3
+
 + 2019, [BIND 9 Administrator Reference Manual BIND 9.14.4 (Stable Release](https://downloads.isc.org/isc/bind9/cur/9.14/doc/arm/Bv9ARM.pdf (accessed August 6,2019)) .
+
 + 2019, [System Administrator's Guide ](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/system_administrators_guide/index (accessed August 7,2019)) .
 
 + 1987, [DOMAIN NAMES - IMPLEMENTATION AND SPECIFICATION ](https://tools.ietf.org/html/rfc1035 (accessed August 7,2019)) .
@@ -402,4 +406,10 @@ Une page Nginx par défaut sera affichée.
 + 2016, [How To Change Apache Default Port To A Custom Port ](https://www.ostechnix.com/how-to-change-apache-ftp-and-ssh-default-port-to-a-custom-port-part-1/ (accessed August 10,2019)) .
 
 + 2012, [Install & Configure BIND DNS Server in CentOS - Part 3 ](https://www.youtube.com/watch?v=70aVLHzbMzw&t=17s (accessed August 10,2019)) .
+
++ 2017, [A guide to hosting static websites using NGINX ](https://medium.com/@jgefroh/a-guide-to-using-nginx-for-static-websites-d96a9d034940 (accessed August 20,2019)) .
+
++ 2018, [How to Host a Static Website with Nginx ](https://medium.com/@jasonrigden/how-to-host-a-static-website-with-nginx-8b2dd0c5b301 (accessed August 20,2019)) .
+
+
 

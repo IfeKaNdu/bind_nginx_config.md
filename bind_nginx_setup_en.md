@@ -333,7 +333,7 @@ http://host.odii.cic:8090
 ### Disable Apache from starting at boot with systemd Initialization Daemon
 To disable Apache from starting at boot run the command:
 ```bash 
-# syatemctl disable httpd.service
+# systemctl disable httpd.service
 ```
 However, it does not immediately stop the service. The stop option of systemctl has to be used for it to stop immediately if it is presently running.
 ```bash
@@ -385,11 +385,135 @@ A default Nginx page will be shown.
 
 
 -------------------------------------------------------------- 
-#####                               References 
-							
+### Configure nginx to server a website
+Beside hosting a static site with nginx, it can still be used to set up reverse proxies and load balancing.Still using the domain name host.odii.cic and the ip address 192.168.8.2 we will point them to the new nginx server.
+All nginx configuration files are located in the `/etc/nginx/` directory. The primary configuration file is `/etc/nginx/nginx.conf`.
+Configuration options in nginx are called directives. Directives are organized into groups known as blocks or contexts. The two terms are synonymous.
+Lines containing directives must end with a ; or nginx will fail to load the configuration and report an error.
+Nginx expects the static files to be in a specific directory which can also vary depending on the choice made in the configuration.
+Create a directory `/var/www/odii.cic/` where the files can go.Then copy the website's static files into the folder.
+```bash
+# mkdir /var/www/odii.cic/
+# cp -r /home/egbuniwe/Documents/_repo/chrome_extension_welcome  /var/www/odii.cic/
+```
+Now to the nginx configuration proper, we have to tell nginx about the site and how to serve it.lets create a `*.conf` file in the `/etc/nginx/conf.d/` directory.Inside the file ,fill in the configuration based on your setting.
+**NB**:The file mush end with `*.conf`
+```bash
+# vim /etc/nginx/conf.d/default.conf
+```
+Inside the file set up the following server block:
+```
+server {
+        listen       80;
+        listen       [::]:80;
+        server_name  www.odii.cic host.odii.cic odii.cic;
+	location / {
+             root /var/www/odii.cic/chrome_extension_welcome;
+           index index.html index.htm;
+        }
+         error_page 404 /404.html;
+ 51             location = /40x.html {
+ 52         }
+     }
+``` 
+This configuration serves static files over HTTP on port 80 from the directory `/var/www/odii.cic/chrome_extension_welcome`.This it does by telling nginx things such as:
++ Deliver files from the folder `/var/www/odii.cic/chrome_extension_welcome`
++ The main index page is `index.html`.
++ The server_name directive defines the hostname or names of which requests should be directed to this server. It allows a multiple domains to be served from a single IP address.192.168.8.2 will serve requests for www.odii.cic, host.odii.cic and odii.cic from the same location `/var/www/odii.cic/chrome_extension_welcome` .
++ The `location` setting lets you configure how nginx will respond to requests for resources within the server. Just like the `server_name` directive tells nginx how to process requests for the domain, location directives cover requests for specific files and folders based on the path in the URL.
+The path, or portion of the URL after the domain, is referred to as the URI.
++ If multiple files are specified for the index directive, nginx will process the list in order and fulfill the request with the first file that exists. If index.html doesn’t exist in the relevant directory, then index.htm will be used. If neither exists, a 404 message will be sent.
+
+check if the configuration is successful by reloading the configuration without stopping the server hence providing the ability to change configurations on the fly without dropping any packets.Restart the nginx server to effect the changes.
+```bash
+# nginx -t
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+# systemctl restart nginx
+```
+If it gives you an error, there’s likely a syntax error. Check through the error and access log files 
+```bash
+# vim /var/log/nginx/access.log;
+# vim /var/log/nginx/error.log;
+```
+Test if the entire Domain names are all working and if nginx is propering serving the website at the root `/var/www/odii.cic/chrome_extension_welcome` by typing the domain names at the browser.
+```
++ http://odii.cic
++ http://host.odii.cic
++ http://www.odii.cic
+```
+The site in the nginx custom configuration file was well rendered by the browser.
+
+### Disabling logging.
+Writting web logs takes resources.If your server is now operational, you may want to save resources for your server by disable logging .To do so,open up the main nginx configuration file:
+```bash
+# vim /etc/nginx/nginx.conf
+---
+##
+# Logging Settings
+##
+access_log /var/log/nginx/access.log;
+error_log /var/log/nginx/error.log;
+---
+```
+Comment out the access_log and the error_log.
+```
+##
+# Logging Settings
+##
+#access_log /var/log/nginx/access.log;
+#error_log /var/log/nginx/error.log;
+```					
+With the above logging will be disable for your nginx web server.
+
+### Client Side Caching
+Telling your clients to cache resources like js, css, and images files can significantly improve performance.
+Add the following caching rules to the end of the your server block:
+```
+---
+ # Media: images, icons, video, audio, HTC
+	    location ~* \.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|mp4|ogg|ogv|webm|htc)$ {
+	      access_log off;
+	      add_header Cache-Control "max-age=2592000";
+	    }	    # CSS and Javascript
+	    location ~* \.(?:css|js)$ {
+	      add_header Cache-Control "max-age=31536000";
+	      access_log off;
+	    }
+```
+The server block should now look like this:
+```
+server {
+        listen       80;
+        listen       [::]:80;
+        server_name  www.odii.cic host.odii.cic odii.cic;
+	location / {
+             root /var/www/odii.cic/chrome_extension_welcome;
+           index index.html index.htm;
+        }
+         error_page 404 /404.html;
+ 51             location = /40x.html {
+ 52         }
+	 # Media: images, icons, video, audio, HTC
+	    location ~* \.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|mp4|ogg|ogv|webm|htc)$ {
+	      access_log off;
+	      add_header Cache-Control "max-age=2592000";
+	    }	    # CSS and Javascript
+	    location ~* \.(?:css|js)$ {
+	      add_header Cache-Control "max-age=31536000";
+	      access_log off;
+	    }
+
+    }
+###								References
+		
 + Negus, N.  2015: Linux Bible(9th edition). Indianapolis, Indiana: John Wiley & Sons Inc., pp. 187,355-358, 362-375,449-476,576-577,708-713.
 
++ Derek, D.  2019: Nginx Cookbook(2019 update). 1005 Gravenstein Highway North, Sebastopol,CA : O’Reilly Media, Inc., pp. 1-8.3
+
 + 2019, [BIND 9 Administrator Reference Manual BIND 9.14.4 (Stable Release](https://downloads.isc.org/isc/bind9/cur/9.14/doc/arm/Bv9ARM.pdf (accessed August 6,2019)) .
+
 + 2019, [System Administrator's Guide ](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/system_administrators_guide/index (accessed August 7,2019)) .
 
 + 1987, [DOMAIN NAMES - IMPLEMENTATION AND SPECIFICATION ](https://tools.ietf.org/html/rfc1035 (accessed August 7,2019)) .
@@ -409,6 +533,10 @@ A default Nginx page will be shown.
 + 2016, [How To Change Apache Default Port To A Custom Port ](https://www.ostechnix.com/how-to-change-apache-ftp-and-ssh-default-port-to-a-custom-port-part-1/ (accessed August 10,2019)) .
 
 + 2012, [Install & Configure BIND DNS Server in CentOS - Part 3 ](https://www.youtube.com/watch?v=70aVLHzbMzw&t=17s (accessed August 10,2019)) .
+
++ 2017, [A guide to hosting static websites using NGINX ](https://medium.com/@jgefroh/a-guide-to-using-nginx-for-static-websites-d96a9d034940 (accessed August 20,2019)) .
+
++ 2018, [How to Host a Static Website with Nginx ](https://medium.com/@jasonrigden/how-to-host-a-static-website-with-nginx-8b2dd0c5b301 (accessed August 20,2019)) .
 
 
 
